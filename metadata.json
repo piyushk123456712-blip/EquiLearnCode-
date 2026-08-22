@@ -1,0 +1,6 @@
+{
+  "name": "EquiLearnCode",
+  "description": "A free bilingual coding education platform offering courses, interactive compiler, roadmaps, and projects in English and Hindi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
