@@ -45,9 +45,12 @@ export const Settings = () => {
   const [youtubeUrlHi, setYoutubeUrlHi] = useState('');
   const [youtubeUrlEn, setYoutubeUrlEn] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem("admin_auth") === "true");
+  const [password, setPassword] = useState("");
 
   // Get selected course object
   const currentCourse = useMemo(() => {
@@ -120,8 +123,9 @@ export const Settings = () => {
           youtubeUrlHi: videoType === 'youtube' ? youtubeUrlHi : undefined,
           mp4FileId,
           code: codeSnippet,
-          practice: practiceProblem
-        }, file || undefined);
+          practice: practiceProblem,
+          pdfFileId: pdfFile ? `pdf_${id}` : undefined
+        }, file || undefined, pdfFile || undefined);
 
         setSuccessMsg(`New lesson "${lessonTitle}" created in ${effectiveCourseTitle}!`);
         
@@ -133,6 +137,7 @@ export const Settings = () => {
         setYoutubeUrlEn('');
         setYoutubeUrlHi('');
         setFile(null);
+        setPdfFile(null);
       }
 
       setTimeout(() => setSuccessMsg(''), 4000);
@@ -143,6 +148,39 @@ export const Settings = () => {
       setLoading(false);
     }
   };
+
+  
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-20 max-w-md flex flex-col items-center">
+        <div className="bg-card border border-border rounded-2xl p-8 shadow-sm w-full text-center">
+          <SettingsIcon className="w-12 h-12 text-primary mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-foreground mb-2">Admin Login</h2>
+          <p className="text-muted-foreground text-sm mb-6">Please enter the admin password to access the studio.</p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (password === "12345") {
+              localStorage.setItem("admin_auth", "true");
+              setIsAuthenticated(true);
+            } else {
+              alert("Incorrect password!");
+            }
+          }}>
+            <input 
+              type="password"
+              placeholder="Enter password..."
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="w-full h-11 px-4 rounded-lg border border-border bg-background text-foreground mb-4 focus:ring-2 focus:ring-primary focus:outline-none text-center"
+            />
+            <button type="submit" className="w-full h-11 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-all">
+              Login to Studio
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
@@ -441,6 +479,37 @@ export const Settings = () => {
               </div>
             )}
           </div>
+
+          
+          {/* Step 4: Notes (PDF Upload) */}
+          <div className="p-5 bg-card border border-border rounded-xl space-y-6">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+              4. Upload Notes (PDF)
+            </h3>
+            <div className="border-2 border-dashed border-border rounded-xl p-8 text-center bg-background hover:bg-accent/40 transition-colors">
+              <input 
+                type="file" 
+                accept="application/pdf"
+                className="hidden" 
+                id="pdf-file-input"
+                onChange={e => {
+                  if (e.target.files && e.target.files[0]) {
+                    setPdfFile(e.target.files[0]);
+                  }
+                }}
+              />
+              <label htmlFor="pdf-file-input" className="cursor-pointer flex flex-col items-center">
+                <BookOpen className="w-10 h-10 text-primary mb-2" />
+                <span className="text-foreground font-semibold text-sm">
+                  {pdfFile ? pdfFile.name : "Click to browse and upload PDF notes"}
+                </span>
+                <span className="text-xs text-muted-foreground mt-1">
+                  Optional: Provide downloadable notes for this lesson
+                </span>
+              </label>
+            </div>
+          </div>
+
 
           {/* Success Banner */}
           {successMsg && (

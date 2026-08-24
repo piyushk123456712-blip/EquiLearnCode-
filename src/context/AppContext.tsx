@@ -14,6 +14,8 @@ export interface CustomLesson {
   youtubeUrl?: string;
   youtubeUrlHi?: string;
   mp4FileId?: string;
+  pdfFileId?: string;
+  pdfFileId?: string;
   code?: string;
   practice?: string;
 }
@@ -34,11 +36,12 @@ interface AppContextType {
   toggleLanguage: () => void;
   toggleTheme: () => void;
   markCompleted: (lessonId: string) => void;
-  addCustomLesson: (lesson: CustomLesson, file?: File) => Promise<void>;
-  updateLessonVideo: (lessonId: string, data: { youtubeUrlEn?: string; youtubeUrlHi?: string; mp4File?: File }) => Promise<void>;
+  addCustomLesson: (lesson: CustomLesson, file?: File, pdfFile?: File) => Promise<void>;
+  updateLessonVideo: (lessonId: string, data: { youtubeUrlEn?: string; youtubeUrlHi?: string; mp4File?: File; pdfFile?: File }) => Promise<void>;
   deleteCustomLesson: (lessonId: string) => Promise<void>;
   resetLessonVideo: (lessonId: string) => Promise<void>;
   getVideoUrl: (fileId: string) => Promise<string | null>;
+  getFileUrl: (fileId: string) => Promise<string | null>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -110,7 +113,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  const addCustomLesson = async (lesson: CustomLesson, file?: File) => {
+  const addCustomLesson = async (lesson: CustomLesson, file?: File, pdfFile?: File) => {
+    if (pdfFile && lesson.pdfFileId) {
+      await set(lesson.pdfFileId, pdfFile);
+    }
     if (file && lesson.mp4FileId) {
       await set(lesson.mp4FileId, file);
     }
@@ -124,16 +130,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (lesson?.mp4FileId) {
       await del(lesson.mp4FileId);
     }
+    if (lesson?.pdfFileId) {
+      await del(lesson.pdfFileId);
+    }
     const updated = customLessons.filter(l => l.id !== lessonId);
     setCustomLessons(updated);
     localStorage.setItem('customLessons', JSON.stringify(updated));
   };
 
-  const updateLessonVideo = async (lessonId: string, data: { youtubeUrlEn?: string; youtubeUrlHi?: string; mp4File?: File }) => {
+  const updateLessonVideo = async (lessonId: string, data: { youtubeUrlEn?: string; youtubeUrlHi?: string; mp4File?: File; pdfFile?: File }) => {
     let mp4FileId: string | undefined = undefined;
     if (data.mp4File) {
       mp4FileId = `video_override_${lessonId}_${Date.now()}`;
       await set(mp4FileId, data.mp4File);
+    }
+    let pdfFileId: string | undefined = undefined;
+    if (data.pdfFile) {
+      pdfFileId = `pdf_override_${lessonId}_${Date.now()}`;
+      await set(pdfFileId, data.pdfFile);
     }
 
     setVideoOverrides(prev => {
@@ -143,7 +157,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         [lessonId]: {
           videoIdEn: data.youtubeUrlEn !== undefined ? extractYoutubeId(data.youtubeUrlEn) : current.videoIdEn,
           videoIdHi: data.youtubeUrlHi !== undefined ? extractYoutubeId(data.youtubeUrlHi) : current.videoIdHi,
-          mp4FileId: mp4FileId || current.mp4FileId
+          mp4FileId: mp4FileId || current.mp4FileId,
+          pdfFileId: pdfFileId || current.pdfFileId
         }
       };
       return updated;
@@ -155,11 +170,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (current?.mp4FileId) {
       await del(current.mp4FileId);
     }
+    if (current?.pdfFileId) {
+      await del(current.pdfFileId);
+    }
     setVideoOverrides(prev => {
       const next = { ...prev };
       delete next[lessonId];
       return next;
     });
+  };
+
+  const getFileUrl = async (fileId: string): Promise<string | null> => {
+    try {
+      const file = await get<File>(fileId);
+      if (file) {
+        return URL.createObjectURL(file);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return null;
   };
 
   const getVideoUrl = async (fileId: string): Promise<string | null> => {
@@ -186,6 +216,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (override.videoIdEn !== undefined) l.videoIdEn = override.videoIdEn;
             if (override.videoIdHi !== undefined) l.videoIdHi = override.videoIdHi;
             if (override.mp4FileId !== undefined) l.mp4FileId = override.mp4FileId;
+            if (override.pdfFileId !== undefined) l.pdfFileId = override.pdfFileId;
           }
         });
       });
@@ -231,6 +262,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         videoIdEn: override?.videoIdEn ?? extractYoutubeId(lesson.youtubeUrl),
         videoIdHi: override?.videoIdHi ?? extractYoutubeId(lesson.youtubeUrlHi),
         mp4FileId: override?.mp4FileId ?? lesson.mp4FileId,
+        pdfFileId: override?.pdfFileId ?? lesson.pdfFileId,
         code: lesson.code || "",
         practice: lesson.practice || "",
         isCustom: true
@@ -255,7 +287,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateLessonVideo,
       deleteCustomLesson,
       resetLessonVideo,
-      getVideoUrl 
+      getVideoUrl,
+      getFileUrl
     }}>
       {children}
     </AppContext.Provider>

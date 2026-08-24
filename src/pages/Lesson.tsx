@@ -223,6 +223,31 @@ export const Lesson = () => {
           )}
         </div>
 
+        
+        {/* PDF Notes Section */}
+        {pdfUrl && (
+          <div className="mb-8 p-6 bg-card border border-border rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Lesson Notes (PDF)</h3>
+                <p className="text-sm text-muted-foreground">Download or view the detailed notes for this topic.</p>
+              </div>
+            </div>
+            <a 
+              href={pdfUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
+            >
+              <Download className="w-4 h-4" /> Download PDF
+            </a>
+          </div>
+        )}
+
+
         {/* Video Player / Coming Soon Placeholder */}
         <div className="relative w-full rounded-2xl overflow-hidden bg-card border border-border shadow-md mb-8 aspect-video">
           {showVideoAd && (

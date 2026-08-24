@@ -25,9 +25,9 @@ export const Navbar = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img 
-                src="/logo.png" 
+                src="/logo.svg" 
                 alt="EquiLearnCode Logo" 
-                className="h-9 w-9 object-contain rounded-lg shadow-sm border border-border/50 group-hover:scale-105 transition-transform" 
+                className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" 
                 referrerPolicy="no-referrer"
               />
               <span className="text-xl font-bold tracking-tight text-foreground text-primary">EquiLearnCode</span>

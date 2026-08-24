@@ -13,6 +13,7 @@ import { Contact } from './pages/Contact';
 import { Privacy } from './pages/Privacy';
 import { Terms } from './pages/Terms';
 import { Settings } from './pages/Settings';
+import { Notes } from './pages/Notes';
 import { Compiler } from './pages/Compiler';
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/settings" element={<Settings />} />
+            <Route path="/notes" element={<Notes />} />
               <Route path="/compiler" element={<Compiler />} />
             </Routes>
           </main>

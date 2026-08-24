@@ -1,64 +1,125 @@
-import { myLessons } from './myLessons';
-
-// Helper function to extract YouTube ID from URL
-function extractYoutubeId(url: string | undefined): string {
-  if (!url) return "";
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : url;
-}
-
-// Convert the flat myLessons array into the nested courses structure required by the app
-export const courses = myLessons.reduce((acc, lesson) => {
-  const courseId = lesson.courseTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const chapterId = lesson.chapterTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const lessonId = lesson.lessonTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
-  // Find or create course
-  let course = acc.find(c => c.id === courseId);
-  if (!course) {
-    course = {
-      id: courseId,
-      title: lesson.courseTitle,
-      description: lesson.courseDescription,
-      descriptionHi: (lesson as any).courseDescriptionHi || lesson.courseDescription,
-      level: lesson.level || "beginner",
-      category: lesson.category || "languages",
-      icon: lesson.icon || "terminal",
-      chapters: []
-    };
-    acc.push(course);
+export const courses = [
+  {
+    "id": "python",
+    "title": "Python",
+    "description": "Learn Python programming from scratch. Covers syntax, data structures, OOP, and real-world scripting.",
+    "descriptionHi": "शुरुआत से पायथन प्रोग्रामिंग सीखें। सिंटैक्स, डेटा स्ट्रक्चर, ऊप्स और वास्तविक दुनिया के प्रोजेक्ट्स।",
+    "level": "beginner",
+    "category": "languages",
+    "icon": "python",
+    "chapters": []
+  },
+  {
+    "id": "javascript",
+    "title": "JavaScript",
+    "description": "Master modern JavaScript (ES6+) for interactive web development and full-stack engineering.",
+    "descriptionHi": "इंटरैक्टिव वेब डेवलपमेंट और फुल-स्टैक इंजीनियरिंग के लिए आधुनिक जावास्क्रिप्ट (ES6+) सीखें।",
+    "level": "beginner",
+    "category": "web",
+    "icon": "javascript",
+    "chapters": []
+  },
+  {
+    "id": "c-programming",
+    "title": "C Programming",
+    "description": "The mother of all modern languages. Learn memory management, pointers, structs, and computer architecture.",
+    "descriptionHi": "सभी आधुनिक भाषाओं की जननी। मेमोरी प्रबंधन, पॉइंटर्स, स्ट्रक्ट्स और कंप्यूटर आर्किटेक्चर सीखें।",
+    "level": "beginner",
+    "category": "languages",
+    "icon": "c",
+    "chapters": []
+  },
+  {
+    "id": "java",
+    "title": "Java",
+    "description": "Learn enterprise-grade Java programming. Covers JVM architecture, OOP concepts, Collections, and Exception Handling.",
+    "descriptionHi": "एंटरप्राइज-ग्रेड जावा प्रोग्रामिंग सीखें। JVM आर्किटेक्चर, OOP कॉन्सेप्ट्स, कलेक्शंस और एक्सेप्शन हैंडलिंग।",
+    "level": "beginner",
+    "category": "languages",
+    "icon": "java",
+    "chapters": []
+  },
+  {
+    "id": "html5-css3",
+    "title": "HTML5 & CSS3",
+    "description": "The foundation of web design. Learn semantic HTML markup, modern CSS Flexbox, Grid, and responsive UI design.",
+    "descriptionHi": "वेब डिज़ाइन की नींव। सिमेंटिक HTML, मॉडर्न CSS फ्लेक्सबॉक्स, ग्रिड और रिस्पॉन्सिव डिज़ाइन सीखें।",
+    "level": "beginner",
+    "category": "web",
+    "icon": "html",
+    "chapters": []
+  },
+  {
+    "id": "react-js",
+    "title": "React.js",
+    "description": "Build blazing fast modern single-page web applications with React components, hooks, and state management.",
+    "descriptionHi": "रिएक्ट कंपोनेंट्स, हुक्स और स्टेट मैनेजमेंट के साथ तेज़ और आधुनिक सिंगल-पेज वेब ऐप्स बनाएं।",
+    "level": "intermediate",
+    "category": "web",
+    "icon": "react",
+    "chapters": []
+  },
+  {
+    "id": "node-js-express",
+    "title": "Node.js & Express",
+    "description": "Build high-performance backend servers, RESTful APIs, and handle authentication with Node.js.",
+    "descriptionHi": "Node.js के साथ हाई-परफॉर्मेंस बैकएंड सर्वर, RESTful API और प्रमाणीकरण बनाएं।",
+    "level": "intermediate",
+    "category": "web",
+    "icon": "nodejs",
+    "chapters": []
+  },
+  {
+    "id": "sql-databases",
+    "title": "SQL & Databases",
+    "description": "Master relational database management, schema design, complex joins, indexing, and data modeling with SQL.",
+    "descriptionHi": "रिलेशनल डेटाबेस प्रबंधन, स्कीमा डिज़ाइन, कॉम्प्लेक्स जॉइन्स, इंडेक्सिंग और SQL डेटा मॉडलिंग में महारत हासिल करें।",
+    "level": "beginner",
+    "category": "databases",
+    "icon": "sql",
+    "chapters": []
+  },
+  {
+    "id": "php-mysql",
+    "title": "PHP & MySQL",
+    "description": "Learn server-side scripting with PHP, database connection with PDO/MySQLi, and dynamic website creation.",
+    "descriptionHi": "PHP के साथ सर्वर-साइड स्क्रिप्टिंग, PDO/MySQLi डेटाबेस कनेक्शन और डायनामिक वेबसाइट बनाना सीखें।",
+    "level": "beginner",
+    "category": "web",
+    "icon": "php",
+    "chapters": []
+  },
+  {
+    "id": "rust",
+    "title": "Rust",
+    "description": "Learn memory-safe systems programming with Rust. Master ownership, borrowing, lifetimes, and blazing concurrency.",
+    "descriptionHi": "रस्ट के साथ मेमोरी-सुरक्षित सिस्टम्स प्रोग्रामिंग सीखें। ओनरशिप, बॉरोइंग, लाइफटाइम्स और हाई स्पीड कॉनकरेंसी।",
+    "level": "intermediate",
+    "category": "languages",
+    "icon": "rust",
+    "chapters": []
+  },
+  {
+    "id": "go-golang-",
+    "title": "Go (Golang)",
+    "description": "Build cloud-native microservices and lightning-fast distributed systems with Google's Go language.",
+    "descriptionHi": "Google की Go भाषा के साथ क्लाउड-नेटिव माइक्रोसर्विस और अल्ट्रा-फ़ास्ट डिस्ट्रीब्यूटेड सिस्टम बनाएं।",
+    "level": "intermediate",
+    "category": "languages",
+    "icon": "golang",
+    "chapters": []
+  },
+  {
+    "id": "kotlin-android",
+    "title": "Kotlin & Android",
+    "description": "Develop modern Android apps and backend services with Google's preferred concise language, Kotlin.",
+    "descriptionHi": "Google की पसंदीदा भाषा कोटलिन के साथ आधुनिक एंड्रॉइड ऐप्स और बैकएंड सर्विसेज विकसित करें।",
+    "level": "beginner",
+    "category": "systems",
+    "icon": "kotlin",
+    "chapters": []
   }
-
-  // Find or create chapter
-  let chapter = course.chapters.find((ch: any) => ch.title === lesson.chapterTitle);
-  if (!chapter) {
-    chapter = {
-      id: chapterId,
-      title: lesson.chapterTitle,
-      titleHi: (lesson as any).chapterTitleHi || lesson.chapterTitle,
-      lessons: []
-    };
-    course.chapters.push(chapter);
-  }
-
-  // Create lesson
-  chapter.lessons.push({
-    id: lessonId,
-    title: lesson.lessonTitle,
-    titleHi: (lesson as any).lessonTitleHi || lesson.lessonTitle,
-    description: lesson.description,
-    descriptionHi: (lesson as any).descriptionHi || lesson.description,
-    objectives: (lesson as any).objectives || [],
-    notes: (lesson as any).notes || "",
-    code: (lesson as any).code || "",
-    practice: (lesson as any).practice || "",
-    videoIdEn: extractYoutubeId(lesson.youtubeVideoUrlEn),
-    videoIdHi: extractYoutubeId(lesson.youtubeVideoUrlHi)
-  });
-
-  return acc;
-}, [] as any[]);
+];
 
 export const projects = [
   {
