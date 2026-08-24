@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from "react";
 import { AppProvider } from './context/AppContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
@@ -17,6 +18,22 @@ import { Notes } from './pages/Notes';
 import { Compiler } from './pages/Compiler';
 
 function App() {
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      const lastAdTime = sessionStorage.getItem("lastGlobalAdTime");
+      const now = Date.now();
+      // Show an ad on click at most once every 2 minutes (120000 ms)
+      if (!lastAdTime || now - parseInt(lastAdTime) > 120000) {
+        const w = window.open("https://www.effectivecpmnetwork.com/yafmt03w6?key=b93a2e046bc3e4d661aef48a4bdd1b09", "_blank");
+        if (w) {
+          sessionStorage.setItem("lastGlobalAdTime", now.toString());
+        }
+      }
+    };
+    document.addEventListener("click", handleGlobalClick);
+    return () => document.removeEventListener("click", handleGlobalClick);
+  }, []);
+
   return (
     <AppProvider>
       <Router>

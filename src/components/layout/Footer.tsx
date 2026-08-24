@@ -1,14 +1,18 @@
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { translations } from '../../data/translations';
+import { AdPlaceholder } from '../ads/AdPlaceholder';
 
 export const Footer = () => {
   const { language } = useAppContext();
   const t = translations[language];
 
   return (
-    <footer className="border-t border-border bg-background py-12">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <footer className="border-t border-border bg-background">
+      <div className="w-full flex justify-center items-center py-4 bg-muted/30 border-b border-border"><AdPlaceholder type="responsive" /></div>
+      <div className="w-full flex justify-center items-center py-4"><AdPlaceholder type="banner" /></div>
+      <div className="py-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
@@ -41,6 +45,7 @@ export const Footer = () => {
             </ul>
           </div>
         </div>
+      </div>
       </div>
     </footer>
   );

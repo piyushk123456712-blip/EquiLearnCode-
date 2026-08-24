@@ -16,6 +16,8 @@ export const Lesson = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showVideoAd, setShowVideoAd] = useState(false);
   const [adTimeLeft, setAdTimeLeft] = useState(10);
+  const [showPdfAd, setShowPdfAd] = useState(false);
+  const [pdfAdTimeLeft, setPdfAdTimeLeft] = useState(5);
   const [mp4Url, setMp4Url] = useState<string | null>(null);
   const [videoLang, setVideoLang] = useState<'en' | 'hi'>(language);
 
@@ -67,7 +69,16 @@ export const Lesson = () => {
       setShowVideoAd(true);
       setAdTimeLeft(10);
     }, 15000); // Popup appears 15 seconds after opening video
-    return () => clearTimeout(timer);
+    
+    const recurringTimer = setInterval(() => {
+      setShowVideoAd(true);
+      setAdTimeLeft(10);
+    }, 300000); // Popup appears every 5 minutes
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(recurringTimer);
+    };
   }, [lessonId]);
 
   useEffect(() => {
@@ -81,6 +92,20 @@ export const Lesson = () => {
     }
     return () => clearInterval(interval);
   }, [showVideoAd, adTimeLeft]);
+
+
+  useEffect(() => {
+    let interval;
+    if (showPdfAd && pdfAdTimeLeft > 0) {
+      interval = setInterval(() => {
+        setPdfAdTimeLeft(prev => prev - 1);
+      }, 1000);
+    } else if (showPdfAd && pdfAdTimeLeft === 0) {
+      setShowPdfAd(false);
+      if (pdfUrl) window.open(pdfUrl, "_blank");
+    }
+    return () => clearInterval(interval);
+  }, [showPdfAd, pdfAdTimeLeft, pdfUrl]);
 
   useEffect(() => {
     if (currentLesson?.mp4FileId) {
@@ -198,6 +223,33 @@ export const Lesson = () => {
 
         <AdPlaceholder type="banner" />
 
+        
+        {/* PDF Ad Modal */}
+        {showPdfAd && (
+          <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center text-white backdrop-blur-md">
+            <div className="absolute top-4 right-4 bg-black/80 px-3 py-1.5 rounded text-sm border border-white/20 font-medium">
+              Preparing Download in {pdfAdTimeLeft}s
+            </div>
+            <div className="text-center p-6 max-w-lg mx-auto">
+              <span className="inline-block px-2 py-1 bg-yellow-500 text-black text-[10px] font-bold rounded mb-4 uppercase tracking-wider">Sponsored Advertisement</span>
+              <h3 className="text-2xl md:text-3xl font-bold mb-3 text-white">Your PDF is almost ready</h3>
+              <p className="text-gray-300 mb-6 text-sm md:text-base">Support our free courses by checking out our sponsors. Your download will start automatically.</p>
+              <a 
+                href="https://www.effectivecpmnetwork.com/yafmt03w6?key=b93a2e046bc3e4d661aef48a4bdd1b09"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  setShowPdfAd(false);
+                  if (pdfUrl) window.open(pdfUrl, "_blank");
+                }}
+                className="inline-block px-8 py-3 bg-primary text-primary-foreground font-medium rounded-full hover:bg-primary/90 transition shadow-lg shadow-primary/20"
+              >
+                Visit Sponsor / Skip Ad
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* Video Player Header with Lang Toggle */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 mt-8">
           <h2 className="text-xl font-bold text-foreground">Video Lesson</h2>
@@ -236,14 +288,17 @@ export const Lesson = () => {
                 <p className="text-sm text-muted-foreground">Download or view the detailed notes for this topic.</p>
               </div>
             </div>
-            <a 
-              href={pdfUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                const w = window.open("https://www.effectivecpmnetwork.com/yafmt03w6?key=b93a2e046bc3e4d661aef48a4bdd1b09", "_blank");
+                setShowPdfAd(true);
+                setPdfAdTimeLeft(5);
+              }}
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
             >
               <Download className="w-4 h-4" /> Download PDF
-            </a>
+            </button>
           </div>
         )}
 
