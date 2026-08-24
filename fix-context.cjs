@@ -1,5 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+const fs = require('fs');
+
+const code = `import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { courses as defaultCourses } from '../data/courses';
+import { Course, CustomLesson } from '../types';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { get, set, del } from 'idb-keyval';
@@ -12,55 +15,6 @@ export interface VideoOverride {
   videoIdHi?: string;
   mp4FileId?: string;
   pdfFileId?: string;
-}
-
-export interface CustomLesson {
-  id: string;
-  courseTitle: string;
-  chapterTitle: string;
-  lessonTitle: string;
-  description: string;
-  youtubeUrl: string;
-  youtubeUrlHi?: string;
-  mp4FileId?: string;
-  pdfFileId?: string;
-  code?: string;
-  practice?: string;
-}
-
-export interface Lesson {
-  id: string;
-  title: string;
-  titleHi?: string;
-  description: string;
-  descriptionHi?: string;
-  videoIdEn: string;
-  videoIdHi?: string;
-  mp4FileId?: string;
-  pdfFileId?: string;
-  objectives?: string[];
-  notes?: string;
-  code?: string;
-  practice?: string;
-  isCustom?: boolean;
-}
-
-export interface Chapter {
-  id: string;
-  title: string;
-  titleHi?: string;
-  lessons: Lesson[];
-}
-
-export interface Course {
-  id: string;
-  title: string;
-  description: string;
-  descriptionHi?: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  category: 'web' | 'mobile' | 'ai' | 'cloud' | 'custom';
-  icon: string;
-  chapters: Chapter[];
 }
 
 interface AppContextType {
@@ -85,7 +39,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 function extractYoutubeId(url: string | undefined): string {
   if (!url) return "";
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const regExp = /^.*(youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=|\\&v=)([^#\\&\\?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : url;
 }
@@ -178,12 +132,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateLessonVideo = async (lessonId: string, data: { youtubeUrlEn?: string; youtubeUrlHi?: string; mp4File?: File; pdfFile?: File }) => {
     let mp4FileId: string | undefined = undefined;
     if (data.mp4File) {
-      mp4FileId = `video_override_${lessonId}_${Date.now()}`;
+      mp4FileId = \`video_override_\${lessonId}_\${Date.now()}\`;
       await set(mp4FileId, data.mp4File);
     }
     let pdfFileId: string | undefined = undefined;
     if (data.pdfFile) {
-      pdfFileId = `pdf_override_${lessonId}_${Date.now()}`;
+      pdfFileId = \`pdf_override_\${lessonId}_\${Date.now()}\`;
       await set(pdfFileId, data.pdfFile);
     }
     
@@ -324,3 +278,6 @@ export const useAppContext = () => {
   }
   return context;
 };
+`;
+
+fs.writeFileSync('src/context/AppContext.tsx', code);

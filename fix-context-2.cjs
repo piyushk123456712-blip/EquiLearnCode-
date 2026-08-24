@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { courses as defaultCourses } from '../data/courses';
+const fs = require('fs');
+
+const code = `import { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { defaultCourses } from '../data/courses';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { get, set, del } from 'idb-keyval';
@@ -85,7 +87,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 function extractYoutubeId(url: string | undefined): string {
   if (!url) return "";
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const regExp = /^.*(youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=|\\&v=)([^#\\&\\?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : url;
 }
@@ -178,12 +180,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateLessonVideo = async (lessonId: string, data: { youtubeUrlEn?: string; youtubeUrlHi?: string; mp4File?: File; pdfFile?: File }) => {
     let mp4FileId: string | undefined = undefined;
     if (data.mp4File) {
-      mp4FileId = `video_override_${lessonId}_${Date.now()}`;
+      mp4FileId = \`video_override_\${lessonId}_\${Date.now()}\`;
       await set(mp4FileId, data.mp4File);
     }
     let pdfFileId: string | undefined = undefined;
     if (data.pdfFile) {
-      pdfFileId = `pdf_override_${lessonId}_${Date.now()}`;
+      pdfFileId = \`pdf_override_\${lessonId}_\${Date.now()}\`;
       await set(pdfFileId, data.pdfFile);
     }
     
@@ -324,3 +326,6 @@ export const useAppContext = () => {
   }
   return context;
 };
+`;
+
+fs.writeFileSync('src/context/AppContext.tsx', code);

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 
 import { translations } from '../data/translations';
-import { AdPlaceholder } from '../components/ads/AdPlaceholder';
 import { cn } from '../lib/utils';
 import { useSEO } from '../hooks/useSEO';
 
@@ -230,7 +229,7 @@ export const Lesson = () => {
           {language === 'hi' && currentLesson.titleHi ? currentLesson.titleHi : currentLesson.title}
         </h1>
 
-        <AdPlaceholder type="banner" />
+        
 
         
         {/* PDF Ad Modal */}
@@ -391,10 +390,7 @@ export const Lesson = () => {
         </div>
 
 
-        {/* Native Ad Placement */}
-        <div className="my-8 flex justify-center w-full overflow-hidden min-h-[100px]">
-          <div id="container-be32d02e0942e6dfdd2a3aace7b439f1" className="w-full flex justify-center items-center"></div>
-        </div>
+        
 
         {/* Lesson Content */}
         <div className="prose prose-neutral dark:prose-invert max-w-none mb-12">
@@ -460,16 +456,14 @@ export const Lesson = () => {
           </button>
         </div>
 
-        <AdPlaceholder type="banner" className="mt-12" />
+        
+      {/* Native Ad Placement */}
+        <div className="mt-12 mb-4 flex justify-center w-full overflow-hidden min-h-[100px]">
+          <div id="container-be32d02e0942e6dfdd2a3aace7b439f1" className="w-full flex justify-center items-center"></div>
+        </div>
       </main>
 
-      {/* Desktop Sidebar Ad Space */}
-      <div className="hidden lg:block w-[300px] shrink-0 p-6 border-l border-border bg-background/50">
-        <div className="sticky top-[88px]">
-          <AdPlaceholder type="sidebar" />
-          <AdPlaceholder type="sidebar" className="mt-6" />
-        </div>
-      </div>
+      
 
     </div>
   );
