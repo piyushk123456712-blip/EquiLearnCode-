@@ -15,7 +15,6 @@ export interface CustomLesson {
   youtubeUrlHi?: string;
   mp4FileId?: string;
   pdfFileId?: string;
-  pdfFileId?: string;
   code?: string;
   practice?: string;
 }

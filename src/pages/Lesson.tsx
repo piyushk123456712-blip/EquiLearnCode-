@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, CheckCircle, ChevronLeft, Menu, X, PlayCircle, Code } from 'lucide-react';
+import {  ChevronRight, CheckCircle, ChevronLeft, Menu, X, PlayCircle, Code , BookOpen, Download } from "lucide-react";
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 
@@ -11,7 +11,7 @@ import { useSEO } from '../hooks/useSEO';
 export const Lesson = () => {
   const { courseId, lessonId } = useParams();
   const navigate = useNavigate();
-  const { language, progress, markCompleted, allCourses, getVideoUrl } = useAppContext();
+  const { language, progress, markCompleted, allCourses, getVideoUrl, getFileUrl } = useAppContext();
   const t = translations[language];
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showVideoAd, setShowVideoAd] = useState(false);
@@ -19,6 +19,7 @@ export const Lesson = () => {
   const [showPdfAd, setShowPdfAd] = useState(false);
   const [pdfAdTimeLeft, setPdfAdTimeLeft] = useState(5);
   const [mp4Url, setMp4Url] = useState<string | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [videoLang, setVideoLang] = useState<'en' | 'hi'>(language);
 
   // Sync local video language with global language toggle if user changes it
@@ -106,6 +107,14 @@ export const Lesson = () => {
     }
     return () => clearInterval(interval);
   }, [showPdfAd, pdfAdTimeLeft, pdfUrl]);
+
+    useEffect(() => {
+    if (currentLesson?.pdfFileId) {
+      getFileUrl(currentLesson.pdfFileId).then(url => setPdfUrl(url));
+    } else {
+      setPdfUrl(null);
+    }
+  }, [currentLesson?.pdfFileId, getFileUrl]);
 
   useEffect(() => {
     if (currentLesson?.mp4FileId) {

@@ -73,7 +73,7 @@ export const Notes = () => {
   );
 };
 
-const NoteCard = ({ note, getFileUrl }: { note: any, getFileUrl: any }) => {
+const NoteCard = ({ note, getFileUrl }: { note: any, getFileUrl: any, key?: string }) => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {

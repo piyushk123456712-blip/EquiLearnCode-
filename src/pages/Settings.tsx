@@ -553,7 +553,7 @@ export const Settings = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {Object.entries(videoOverrides).map(([lessonId, override]) => (
+            {Object.entries(videoOverrides).map(([lessonId, override]: [string, any]) => (
               <div key={lessonId} className="flex items-center justify-between p-4 bg-card border border-border rounded-xl">
                 <div>
                   <div className="font-semibold text-foreground text-sm">{lessonId}</div>
