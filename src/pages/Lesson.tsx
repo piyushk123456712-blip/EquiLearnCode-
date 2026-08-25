@@ -13,10 +13,6 @@ export const Lesson = () => {
   const { language, progress, markCompleted, allCourses, getVideoUrl, getFileUrl } = useAppContext();
   const t = translations[language];
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showVideoAd, setShowVideoAd] = useState(false);
-  const [adTimeLeft, setAdTimeLeft] = useState(10);
-  const [showPdfAd, setShowPdfAd] = useState(false);
-  const [pdfAdTimeLeft, setPdfAdTimeLeft] = useState(5);
   const [mp4Url, setMp4Url] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [videoLang, setVideoLang] = useState<'en' | 'hi'>(language);
@@ -26,7 +22,7 @@ export const Lesson = () => {
     setVideoLang(language);
   }, [language]);
 
-  // Inject Native Ad Script
+  // Inject Native Ad Script at the very bottom of the page
   useEffect(() => {
     const containerId = "container-be32d02e0942e6dfdd2a3aace7b439f1";
     const container = document.getElementById(containerId);
@@ -62,52 +58,8 @@ export const Lesson = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [lessonId]);
-  
-  useEffect(() => {
-    setShowVideoAd(false);
-    const timer = setTimeout(() => {
-      setShowVideoAd(true);
-      setAdTimeLeft(10);
-    }, 15000); // Popup appears 15 seconds after opening video
-    
-    const recurringTimer = setInterval(() => {
-      setShowVideoAd(true);
-      setAdTimeLeft(10);
-    }, 300000); // Popup appears every 5 minutes
-
-    return () => {
-      clearTimeout(timer);
-      clearInterval(recurringTimer);
-    };
-  }, [lessonId]);
 
   useEffect(() => {
-    let interval;
-    if (showVideoAd && adTimeLeft > 0) {
-      interval = setInterval(() => {
-        setAdTimeLeft(prev => prev - 1);
-      }, 1000);
-    } else if (showVideoAd && adTimeLeft === 0) {
-      setShowVideoAd(false);
-    }
-    return () => clearInterval(interval);
-  }, [showVideoAd, adTimeLeft]);
-
-
-  useEffect(() => {
-    let interval;
-    if (showPdfAd && pdfAdTimeLeft > 0) {
-      interval = setInterval(() => {
-        setPdfAdTimeLeft(prev => prev - 1);
-      }, 1000);
-    } else if (showPdfAd && pdfAdTimeLeft === 0) {
-      setShowPdfAd(false);
-      if (pdfUrl) window.open(pdfUrl, "_blank");
-    }
-    return () => clearInterval(interval);
-  }, [showPdfAd, pdfAdTimeLeft, pdfUrl]);
-
-    useEffect(() => {
     if (currentLesson?.pdfFileId) {
       getFileUrl(currentLesson.pdfFileId).then(url => setPdfUrl(url));
     } else {
@@ -122,6 +74,7 @@ export const Lesson = () => {
       setMp4Url(null);
     }
   }, [currentLesson?.mp4FileId, getVideoUrl]);
+
   
 
   if (!course || !currentLesson) {
@@ -232,32 +185,6 @@ export const Lesson = () => {
         
 
         
-        {/* PDF Ad Modal */}
-        {showPdfAd && (
-          <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center text-white backdrop-blur-md">
-            <div className="absolute top-4 right-4 bg-black/80 px-3 py-1.5 rounded text-sm border border-white/20 font-medium">
-              Preparing Download in {pdfAdTimeLeft}s
-            </div>
-            <div className="text-center p-6 max-w-lg mx-auto">
-              <span className="inline-block px-2 py-1 bg-yellow-500 text-black text-[10px] font-bold rounded mb-4 uppercase tracking-wider">Sponsored Advertisement</span>
-              <h3 className="text-2xl md:text-3xl font-bold mb-3 text-white">Your PDF is almost ready</h3>
-              <p className="text-gray-300 mb-6 text-sm md:text-base">Support our free courses by checking out our sponsors. Your download will start automatically.</p>
-              <a 
-                href="https://www.effectivecpmnetwork.com/yafmt03w6?key=b93a2e046bc3e4d661aef48a4bdd1b09"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  setShowPdfAd(false);
-                  if (pdfUrl) window.open(pdfUrl, "_blank");
-                }}
-                className="inline-block px-8 py-3 bg-primary text-primary-foreground font-medium rounded-full hover:bg-primary/90 transition shadow-lg shadow-primary/20"
-              >
-                Visit Sponsor / Skip Ad
-              </a>
-            </div>
-          </div>
-        )}
-
         {/* Video Player Header with Lang Toggle */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 mt-8">
           <h2 className="text-xl font-bold text-foreground">Video Lesson</h2>
@@ -283,7 +210,6 @@ export const Lesson = () => {
           )}
         </div>
 
-        
         {/* PDF Notes Section */}
         {pdfUrl && (
           <div className="mb-8 p-6 bg-card border border-border rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
@@ -296,53 +222,19 @@ export const Lesson = () => {
                 <p className="text-sm text-muted-foreground">Download or view the detailed notes for this topic.</p>
               </div>
             </div>
-            <button 
-              onClick={(e) => {
-                e.preventDefault();
-                const w = window.open("https://www.effectivecpmnetwork.com/yafmt03w6?key=b93a2e046bc3e4d661aef48a4bdd1b09", "_blank");
-                setShowPdfAd(true);
-                setPdfAdTimeLeft(5);
-              }}
+            <a 
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
             >
               <Download className="w-4 h-4" /> Download PDF
-            </button>
+            </a>
           </div>
         )}
 
-
         {/* Video Player / Coming Soon Placeholder */}
         <div className="relative w-full rounded-2xl overflow-hidden bg-card border border-border shadow-md mb-8 aspect-video">
-          {showVideoAd && (
-            <div className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center text-white backdrop-blur-md">
-              <div className="absolute top-4 right-4 bg-black/80 px-3 py-1.5 rounded text-sm border border-white/20 font-medium">
-                Ad closes in {adTimeLeft}s
-              </div>
-              <div className="text-center p-6 max-w-lg mx-auto">
-                <span className="inline-block px-2 py-1 bg-yellow-500 text-black text-[10px] font-bold rounded mb-4 uppercase tracking-wider">Advertisement</span>
-                <h3 className="text-2xl md:text-3xl font-bold mb-3 text-white">Sponsored Offer</h3>
-                <p className="text-gray-300 mb-6 text-sm md:text-base">Check out our sponsor's exclusive offer. By visiting our sponsors, you help keep our courses free for everyone!</p>
-                <a 
-                  href="https://www.effectivecpmnetwork.com/yafmt03w6?key=b93a2e046bc3e4d661aef48a4bdd1b09"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setShowVideoAd(false)}
-                  className="inline-block px-8 py-3 bg-primary text-primary-foreground font-medium rounded-full hover:bg-primary/90 transition shadow-lg shadow-primary/20"
-                >
-                  Visit Sponsor / Claim Offer
-                </a>
-              </div>
-              {adTimeLeft <= 5 && (
-                <button 
-                  onClick={() => setShowVideoAd(false)}
-                  className="absolute bottom-6 right-6 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white text-sm font-medium rounded transition"
-                >
-                  Skip Ad &rarr;
-                </button>
-              )}
-            </div>
-          )}
-
           {mp4Url ? (
             <video 
               className="absolute top-0 left-0 w-full h-full"

@@ -85,9 +85,23 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 function extractYoutubeId(url: string | undefined): string {
   if (!url) return "";
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : url;
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  
+  // If already an 11 character ID
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+  
+  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|live\/|shorts\/))([\w-]{11})/;
+  const match = trimmed.match(regExp);
+  return match ? match[1] : trimmed;
+}
+
+function sanitizeForFirestore<T>(data: T): T {
+  return JSON.parse(JSON.stringify(data, (key, value) => {
+    return value === undefined ? null : value;
+  }));
 }
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -104,18 +118,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : {};
   });
 
-  const [customLessons, setCustomLessons] = useState<CustomLesson[]>([]);
-  const [videoOverrides, setVideoOverrides] = useState<Record<string, VideoOverride>>({});
+  const [customLessons, setCustomLessons] = useState<CustomLesson[]>(() => {
+    const saved = localStorage.getItem('cache_custom_lessons');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [videoOverrides, setVideoOverrides] = useState<Record<string, VideoOverride>>(() => {
+    const saved = localStorage.getItem('cache_video_overrides');
+    return saved ? JSON.parse(saved) : {};
+  });
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'appData', 'shared'), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (data.customLessons) setCustomLessons(data.customLessons);
-        if (data.videoOverrides) setVideoOverrides(data.videoOverrides);
-      }
-    });
-    return () => unsub();
+    try {
+      const unsub = onSnapshot(
+        doc(db, 'appData', 'shared'), 
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.customLessons && Array.isArray(data.customLessons)) {
+              setCustomLessons(data.customLessons);
+              localStorage.setItem('cache_custom_lessons', JSON.stringify(data.customLessons));
+            }
+            if (data.videoOverrides && typeof data.videoOverrides === 'object') {
+              setVideoOverrides(data.videoOverrides);
+              localStorage.setItem('cache_video_overrides', JSON.stringify(data.videoOverrides));
+            }
+          }
+        },
+        (error) => {
+          console.error("Firestore sync error:", error);
+        }
+      );
+      return () => unsub();
+    } catch (e) {
+      console.error("Firestore onSnapshot subscription failed:", e);
+    }
   }, []);
 
   useEffect(() => {
@@ -159,7 +195,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const updated = [...customLessons, lesson];
     setCustomLessons(updated);
-    await setDoc(doc(db, 'appData', 'shared'), { customLessons: updated, videoOverrides }, { merge: true });
+    localStorage.setItem('cache_custom_lessons', JSON.stringify(updated));
+    
+    try {
+      const payload = sanitizeForFirestore({ customLessons: updated, videoOverrides });
+      await setDoc(doc(db, 'appData', 'shared'), payload, { merge: true });
+    } catch (err) {
+      console.error("Error saving to Firestore:", err);
+      throw err;
+    }
   };
 
   const deleteCustomLesson = async (lessonId: string) => {
@@ -172,7 +216,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const updated = customLessons.filter(l => l.id !== lessonId);
     setCustomLessons(updated);
-    await setDoc(doc(db, 'appData', 'shared'), { customLessons: updated, videoOverrides }, { merge: true });
+    localStorage.setItem('cache_custom_lessons', JSON.stringify(updated));
+    
+    try {
+      const payload = sanitizeForFirestore({ customLessons: updated, videoOverrides });
+      await setDoc(doc(db, 'appData', 'shared'), payload, { merge: true });
+    } catch (err) {
+      console.error("Error deleting from Firestore:", err);
+      throw err;
+    }
   };
 
   const updateLessonVideo = async (lessonId: string, data: { youtubeUrlEn?: string; youtubeUrlHi?: string; mp4File?: File; pdfFile?: File }) => {
@@ -191,15 +243,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updatedOverrides = {
       ...videoOverrides,
       [lessonId]: {
-        videoIdEn: data.youtubeUrlEn !== undefined ? extractYoutubeId(data.youtubeUrlEn) : current.videoIdEn,
-        videoIdHi: data.youtubeUrlHi !== undefined ? extractYoutubeId(data.youtubeUrlHi) : current.videoIdHi,
-        mp4FileId: mp4FileId || current.mp4FileId,
-        pdfFileId: pdfFileId || current.pdfFileId
+        videoIdEn: data.youtubeUrlEn !== undefined ? extractYoutubeId(data.youtubeUrlEn) : (current.videoIdEn || ""),
+        videoIdHi: data.youtubeUrlHi !== undefined ? extractYoutubeId(data.youtubeUrlHi) : (current.videoIdHi || ""),
+        mp4FileId: mp4FileId || current.mp4FileId || "",
+        pdfFileId: pdfFileId || current.pdfFileId || ""
       }
     };
     
     setVideoOverrides(updatedOverrides);
-    await setDoc(doc(db, 'appData', 'shared'), { customLessons, videoOverrides: updatedOverrides }, { merge: true });
+    localStorage.setItem('cache_video_overrides', JSON.stringify(updatedOverrides));
+    
+    try {
+      const payload = sanitizeForFirestore({ customLessons, videoOverrides: updatedOverrides });
+      await setDoc(doc(db, 'appData', 'shared'), payload, { merge: true });
+    } catch (err) {
+      console.error("Error updating video in Firestore:", err);
+      throw err;
+    }
   };
 
   const resetLessonVideo = async (lessonId: string) => {
@@ -214,7 +274,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     delete nextOverrides[lessonId];
     
     setVideoOverrides(nextOverrides);
-    await setDoc(doc(db, 'appData', 'shared'), { customLessons, videoOverrides: nextOverrides }, { merge: true });
+    localStorage.setItem('cache_video_overrides', JSON.stringify(nextOverrides));
+    
+    try {
+      const payload = sanitizeForFirestore({ customLessons, videoOverrides: nextOverrides });
+      await setDoc(doc(db, 'appData', 'shared'), payload, { merge: true });
+    } catch (err) {
+      console.error("Error resetting video in Firestore:", err);
+      throw err;
+    }
   };
 
   const getFileUrl = async (fileId: string): Promise<string | null> => {

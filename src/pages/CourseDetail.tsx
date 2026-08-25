@@ -85,8 +85,6 @@ export const CourseDetail = () => {
         )}
       </div>
 
-      <AdPlaceholder type="banner" />
-
       {/* Curriculum */}
       <div className="mt-12">
         <h2 className="text-2xl font-bold mb-6 text-foreground">Course Curriculum</h2>
