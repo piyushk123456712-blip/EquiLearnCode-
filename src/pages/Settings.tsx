@@ -50,8 +50,9 @@ export const Settings = () => {
   
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem("admin_auth") === "true");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   // Get selected course object
   const currentCourse = useMemo(() => {
@@ -169,10 +170,10 @@ export const Settings = () => {
           <form onSubmit={(e) => {
             e.preventDefault();
             if (password === "TeenoAdmin@2026!") {
-              localStorage.setItem("admin_auth", "true");
+              // Session-only auth, requires password on every visit
               setIsAuthenticated(true);
             } else {
-              alert("Incorrect password!");
+              setLoginError("Incorrect password. Please try again.");
             }
           }}>
             <input 
@@ -182,6 +183,7 @@ export const Settings = () => {
               onChange={e => setPassword(e.target.value)}
               className="w-full h-11 px-4 rounded-lg border border-border bg-background text-foreground mb-4 focus:ring-2 focus:ring-primary focus:outline-none text-center"
             />
+            {loginError && <p className="text-red-500 text-xs mb-3">{loginError}</p>}
             <button type="submit" className="w-full h-11 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-all">
               Login to Studio
             </button>
