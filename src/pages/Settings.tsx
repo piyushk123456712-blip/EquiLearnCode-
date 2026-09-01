@@ -28,7 +28,7 @@ export const Settings = () => {
   } = useAppContext();
   
   // Selection States
-  const [targetType, setTargetType] = useState<'existing' | 'new_lesson' | 'new_course'>('existing');
+  const [actionType, setActionType] = useState<'manage_video' | 'manage_notes' | 'new_lesson'>('manage_video');
   const [selectedCourseId, setSelectedCourseId] = useState<string>(() => allCourses[0]?.id || 'python');
   const [selectedLessonId, setSelectedLessonId] = useState<string>('');
   
@@ -46,6 +46,7 @@ export const Settings = () => {
   const [youtubeUrlEn, setYoutubeUrlEn] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [notes, setNotes] = useState("");
   
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -82,11 +83,11 @@ export const Settings = () => {
 
   // Pre-fill existing URLs when activeLesson changes
   React.useEffect(() => {
-    if (targetType === 'existing' && activeLesson) {
+    if ((actionType === 'manage_video' || actionType === 'manage_notes') && activeLesson) {
       setYoutubeUrlHi(activeLesson.videoIdHi ? `https://youtu.be/${activeLesson.videoIdHi}` : '');
       setYoutubeUrlEn(activeLesson.videoIdEn ? `https://youtu.be/${activeLesson.videoIdEn}` : '');
     }
-  }, [activeLesson, targetType]);
+  }, [activeLesson, actionType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,22 +95,28 @@ export const Settings = () => {
     setSuccessMsg('');
 
     try {
-      if (targetType === 'existing') {
+      if ((actionType === 'manage_video' || actionType === 'manage_notes')) {
         if (!selectedLessonId) {
           alert('Please select a lesson first.');
           return;
         }
 
-        await updateLessonVideo(selectedLessonId, {
-          youtubeUrlEn: videoType === 'youtube' ? youtubeUrlEn : undefined,
-          youtubeUrlHi: videoType === 'youtube' ? youtubeUrlHi : undefined,
-          mp4File: videoType === 'mp4' && file ? file : undefined
-        });
+        const payload: any = {};
+        if (actionType === 'manage_video') {
+          payload.youtubeUrlEn = videoType === 'youtube' ? youtubeUrlEn : undefined;
+          payload.youtubeUrlHi = videoType === 'youtube' ? youtubeUrlHi : undefined;
+          payload.mp4File = videoType === 'mp4' && file ? file : undefined;
+        } else if (actionType === 'manage_notes') {
+          payload.notes = notes ? notes : undefined;
+          payload.pdfFile = pdfFile ? pdfFile : undefined;
+        }
 
-        setSuccessMsg(`Video successfully saved for "${activeLesson?.title || selectedLessonId}"!`);
+        await updateLessonVideo(selectedLessonId, payload);
+        const typeLabel = actionType === 'manage_video' ? 'Video' : 'Notes';
+        setSuccessMsg(`${typeLabel} successfully saved for "${activeLesson?.title || selectedLessonId}"!`);
       } else {
         // Adding new lesson or course
-        const effectiveCourseTitle = targetType === 'new_course' ? customCourseTitle : (currentCourse?.title || 'Programming');
+        const effectiveCourseTitle = false /* disabled new_course for simplicity */ ? customCourseTitle : (currentCourse?.title || 'Programming');
         const id = crypto.randomUUID();
         const mp4FileId = videoType === 'mp4' && file ? `video_${id}` : undefined;
 
@@ -124,6 +131,7 @@ export const Settings = () => {
           mp4FileId,
           code: codeSnippet,
           practice: practiceProblem,
+          notes: notes,
           pdfFileId: pdfFile ? `pdf_${id}` : undefined
         }, file || undefined, pdfFile || undefined);
 
@@ -138,6 +146,7 @@ export const Settings = () => {
         setYoutubeUrlHi('');
         setFile(null);
         setPdfFile(null);
+        setNotes('');
       }
 
       setTimeout(() => setSuccessMsg(''), 4000);
@@ -159,7 +168,7 @@ export const Settings = () => {
           <p className="text-muted-foreground text-sm mb-6">Please enter the admin password to access the studio.</p>
           <form onSubmit={(e) => {
             e.preventDefault();
-            if (password === "12345") {
+            if (password === "TeenoAdmin@2026!") {
               localStorage.setItem("admin_auth", "true");
               setIsAuthenticated(true);
             } else {
@@ -219,27 +228,45 @@ export const Settings = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
                 type="button"
-                onClick={() => setTargetType('existing')}
+                onClick={() => setActionType('manage_video')}
                 className={`p-4 rounded-xl border text-left transition-all flex flex-col gap-1.5 ${
-                  targetType === 'existing'
+                  actionType === 'manage_video'
                     ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
                     : 'border-border bg-background hover:bg-accent/40'
                 }`}
               >
                 <div className="flex items-center gap-2 font-semibold text-sm text-foreground">
                   <Film className="w-4 h-4 text-primary" />
-                  Add Video to Language
+                  Upload Videos
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  Add/update Hindi & English video for an existing course lesson.
+                  Add or update videos for an existing programming language lesson.
+                </span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setActionType('manage_notes')}
+                className={`p-4 rounded-xl border text-left transition-all flex flex-col gap-1.5 ${
+                  actionType === 'manage_notes'
+                    ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                    : 'border-border bg-background hover:bg-accent/40'
+                }`}
+              >
+                <div className="flex items-center gap-2 font-semibold text-sm text-foreground">
+                  <BookOpen className="w-4 h-4 text-primary" />
+                  Upload Notes
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Add or update PDF or Written notes for an existing lesson.
                 </span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setTargetType('new_lesson')}
+                onClick={() => setActionType('new_lesson')}
                 className={`p-4 rounded-xl border text-left transition-all flex flex-col gap-1.5 ${
-                  targetType === 'new_lesson'
+                  actionType === 'new_lesson'
                     ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
                     : 'border-border bg-background hover:bg-accent/40'
                 }`}
@@ -249,29 +276,10 @@ export const Settings = () => {
                   Add New Lesson
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  Add a new lesson topic to an existing language course.
+                  Create a completely new lesson topic for a programming language.
                 </span>
               </button>
-
-              <button
-                type="button"
-                onClick={() => setTargetType('new_course')}
-                className={`p-4 rounded-xl border text-left transition-all flex flex-col gap-1.5 ${
-                  targetType === 'new_course'
-                    ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
-                    : 'border-border bg-background hover:bg-accent/40'
-                }`}
-              >
-                <div className="flex items-center gap-2 font-semibold text-sm text-foreground">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  Create New Course
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  Create a completely new programming course from scratch.
-                </span>
-              </button>
-            </div>
-          </div>
+            </div></div>
 
           {/* Step 2: Language & Lesson Selection */}
           <div className="p-5 bg-accent/20 border border-border rounded-xl space-y-6">
@@ -279,7 +287,7 @@ export const Settings = () => {
               2. Select Programming Language & Topic
             </h3>
 
-            {targetType === 'new_course' ? (
+            {false /* disabled new_course for simplicity */ ? (
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">New Course / Language Name</label>
                 <input 
@@ -308,7 +316,7 @@ export const Settings = () => {
                   </select>
                 </div>
 
-                {targetType === 'existing' && (
+                {(actionType === 'manage_video' || actionType === 'manage_notes') && (
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Select Lesson</label>
                     <select
@@ -331,7 +339,7 @@ export const Settings = () => {
             )}
 
             {/* If adding new lesson, show title inputs */}
-            {targetType !== 'existing' && (
+            {actionType === 'new_lesson' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">Chapter / Module Title</label>
@@ -369,7 +377,7 @@ export const Settings = () => {
             )}
 
             {/* Currently Selected Lesson Status */}
-            {targetType === 'existing' && activeLesson && (
+            {(actionType === 'manage_video' || actionType === 'manage_notes') && activeLesson && (
               <div className="flex items-center justify-between p-3.5 bg-background rounded-lg border border-border/80 text-sm">
                 <div>
                   <div className="font-semibold text-foreground">{activeLesson.title}</div>
@@ -388,6 +396,8 @@ export const Settings = () => {
             )}
           </div>
 
+          {(actionType === 'manage_video' || actionType === 'new_lesson') && (
+            <>
           {/* Step 3: Video URLs / File Upload */}
           <div className="p-5 bg-card border border-border rounded-xl space-y-6">
             <div className="flex items-center justify-between">
@@ -481,12 +491,36 @@ export const Settings = () => {
           </div>
 
           
-          {/* Step 4: Notes (PDF Upload) */}
+                     </>
+          )}
+          
+          {(actionType === 'manage_notes' || actionType === 'new_lesson') && (
+            <>
+          {/* Step 4: Notes (Cloud Synced) */}
           <div className="p-5 bg-card border border-border rounded-xl space-y-6">
             <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
-              4. Upload Notes (PDF)
+              4. Written Notes (Cloud Synced)
             </h3>
-            <div className="border-2 border-dashed border-border rounded-xl p-8 text-center bg-background hover:bg-accent/40 transition-colors">
+            <p className="text-sm text-muted-foreground">
+              Type or paste your lesson notes here. These notes will sync securely to the server and appear below the video on the lesson page.
+            </p>
+            <textarea 
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="# Lesson Notes
+
+Start typing your notes here using Markdown..."
+              className="w-full bg-background border border-border rounded-xl p-4 text-foreground focus:ring-2 focus:ring-primary focus:outline-none min-h-[200px]"
+            />
+          </div>
+          
+          {/* Fallback Legacy PDF Upload */}
+          <div className="p-5 bg-card border border-border rounded-xl space-y-6 mt-4">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider text-muted-foreground">
+              Upload PDF Notes (Cloud Synced)
+            </h3>
+            <p className="text-xs text-muted-foreground">Upload your PDF here. It will be securely saved to Firebase Cloud Storage and sync across all your devices.</p>
+            <div className="border border-dashed border-border rounded-xl p-4 text-center bg-background hover:bg-accent/40 transition-colors">
               <input 
                 type="file" 
                 accept="application/pdf"
@@ -499,17 +533,16 @@ export const Settings = () => {
                 }}
               />
               <label htmlFor="pdf-file-input" className="cursor-pointer flex flex-col items-center">
-                <BookOpen className="w-10 h-10 text-primary mb-2" />
                 <span className="text-foreground font-semibold text-sm">
-                  {pdfFile ? pdfFile.name : "Click to browse and upload PDF notes"}
-                </span>
-                <span className="text-xs text-muted-foreground mt-1">
-                  Optional: Provide downloadable notes for this lesson
+                  {pdfFile ? pdfFile.name : "Select PDF file"}
                 </span>
               </label>
             </div>
           </div>
 
+
+                      </>
+          )}
 
           {/* Success Banner */}
           {successMsg && (
@@ -529,7 +562,7 @@ export const Settings = () => {
               {loading ? (
                 <RefreshCw className="w-5 h-5 animate-spin" />
               ) : (
-                <><CheckCircle2 className="w-5 h-5" /> Save & Publish Video</>
+                <><CheckCircle2 className="w-5 h-5" /> {actionType === 'manage_notes' ? 'Save Notes' : (actionType === 'new_lesson' ? 'Publish New Lesson' : 'Save Video')}</>
               )}
             </button>
           </div>
@@ -540,13 +573,13 @@ export const Settings = () => {
       <div className="space-y-6">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
           <Film className="w-5 h-5 text-primary" />
-          Active Video Overrides & Custom Lessons
+          Active Content Overrides & Custom Lessons
         </h2>
 
         {Object.keys(videoOverrides).length === 0 && customLessons.length === 0 ? (
           <div className="p-8 border border-dashed border-border rounded-2xl text-center bg-card">
             <Film className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
-            <p className="text-sm font-semibold text-foreground">No custom video overrides active</p>
+            <p className="text-sm font-semibold text-foreground">No custom content overrides active</p>
             <p className="text-xs text-muted-foreground mt-1">
               Select any language above to attach your YouTube videos or upload MP4 files.
             </p>
@@ -561,6 +594,8 @@ export const Settings = () => {
                     {override.videoIdHi && <span>Hindi: <code className="bg-secondary px-1 py-0.5 rounded">{override.videoIdHi}</code></span>}
                     {override.videoIdEn && <span>English: <code className="bg-secondary px-1 py-0.5 rounded">{override.videoIdEn}</code></span>}
                     {override.mp4FileId && <span>MP4: <code className="bg-secondary px-1 py-0.5 rounded">{override.mp4FileId}</code></span>}
+                    {override.notes && <span className="text-emerald-500">Written Notes Added</span>}
+                    {override.pdfFileId && <span className="text-emerald-500">PDF Uploaded</span>}
                   </div>
                 </div>
                 <button

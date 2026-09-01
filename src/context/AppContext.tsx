@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { courses as defaultCourses } from '../data/courses';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, storage } from '../lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { get, set, del } from 'idb-keyval';
 
 type Language = 'en' | 'hi';
@@ -12,6 +13,7 @@ export interface VideoOverride {
   videoIdHi?: string;
   mp4FileId?: string;
   pdfFileId?: string;
+  notes?: string;
 }
 
 export interface CustomLesson {
@@ -24,6 +26,7 @@ export interface CustomLesson {
   youtubeUrlHi?: string;
   mp4FileId?: string;
   pdfFileId?: string;
+  notes?: string;
   code?: string;
   practice?: string;
 }
@@ -74,7 +77,7 @@ interface AppContextType {
   toggleTheme: () => void;
   markCompleted: (lessonId: string) => void;
   addCustomLesson: (lesson: CustomLesson, file?: File, pdfFile?: File) => Promise<void>;
-  updateLessonVideo: (lessonId: string, data: { youtubeUrlEn?: string; youtubeUrlHi?: string; mp4File?: File; pdfFile?: File }) => Promise<void>;
+  updateLessonVideo: (lessonId: string, data: { youtubeUrlEn?: string; youtubeUrlHi?: string; mp4File?: File; pdfFile?: File; notes?: string }) => Promise<void>;
   deleteCustomLesson: (lessonId: string) => Promise<void>;
   resetLessonVideo: (lessonId: string) => Promise<void>;
   getVideoUrl: (fileId: string) => Promise<string | null>;
@@ -188,7 +191,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addCustomLesson = async (lesson: CustomLesson, file?: File, pdfFile?: File) => {
     if (pdfFile && lesson.pdfFileId) {
-      await set(lesson.pdfFileId, pdfFile);
+      try {
+        const storageRef = ref(storage, `pdfs/${lesson.pdfFileId}`);
+        await uploadBytes(storageRef, pdfFile);
+        const url = await getDownloadURL(storageRef);
+        lesson.pdfFileId = url; // Save URL instead of ID
+      } catch (err) {
+        console.error("Firebase Storage Upload Error (PDF):", err);
+      }
     }
     if (file && lesson.mp4FileId) {
       await set(lesson.mp4FileId, file);
@@ -227,7 +237,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateLessonVideo = async (lessonId: string, data: { youtubeUrlEn?: string; youtubeUrlHi?: string; mp4File?: File; pdfFile?: File }) => {
+  const updateLessonVideo = async (lessonId: string, data: { youtubeUrlEn?: string; youtubeUrlHi?: string; mp4File?: File; pdfFile?: File; notes?: string }) => {
     let mp4FileId: string | undefined = undefined;
     if (data.mp4File) {
       mp4FileId = `video_override_${lessonId}_${Date.now()}`;
@@ -235,8 +245,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     let pdfFileId: string | undefined = undefined;
     if (data.pdfFile) {
-      pdfFileId = `pdf_override_${lessonId}_${Date.now()}`;
-      await set(pdfFileId, data.pdfFile);
+      try {
+        const rawId = `pdf_override_${lessonId}_${Date.now()}`;
+        const storageRef = ref(storage, `pdfs/${rawId}`);
+        await uploadBytes(storageRef, data.pdfFile);
+        pdfFileId = await getDownloadURL(storageRef); // Save URL instead
+      } catch (err) {
+        console.error("Firebase Storage Upload Error (PDF Override):", err);
+      }
     }
     
     const current = videoOverrides[lessonId] || {};
@@ -246,7 +262,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         videoIdEn: data.youtubeUrlEn !== undefined ? extractYoutubeId(data.youtubeUrlEn) : (current.videoIdEn || ""),
         videoIdHi: data.youtubeUrlHi !== undefined ? extractYoutubeId(data.youtubeUrlHi) : (current.videoIdHi || ""),
         mp4FileId: mp4FileId || current.mp4FileId || "",
-        pdfFileId: pdfFileId || current.pdfFileId || ""
+        pdfFileId: pdfFileId || current.pdfFileId || "",
+        notes: data.notes !== undefined ? data.notes : current.notes
       }
     };
     
@@ -286,6 +303,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const getFileUrl = async (fileId: string): Promise<string | null> => {
+    if (!fileId) return null;
+    if (fileId.startsWith('http')) return fileId;
     try {
       const file = await get<File>(fileId);
       if (file) {
@@ -321,6 +340,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (override.videoIdHi !== undefined) l.videoIdHi = override.videoIdHi;
             if (override.mp4FileId !== undefined) l.mp4FileId = override.mp4FileId;
             if (override.pdfFileId !== undefined) l.pdfFileId = override.pdfFileId;
+            if (override.notes !== undefined) l.notes = override.notes;
           }
         });
       });
@@ -368,6 +388,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         pdfFileId: override?.pdfFileId ?? lesson.pdfFileId,
         code: lesson.code || "",
         practice: lesson.practice || "",
+        notes: override?.notes ?? lesson.notes,
         isCustom: true
       });
     });

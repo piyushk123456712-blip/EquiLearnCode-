@@ -16,6 +16,7 @@ export const Navbar = () => {
     { name: t.roadmaps, path: '/roadmaps' },
     { name: t.projects, path: '/projects' },
     { name: t.about, path: '/about' },
+    { name: 'Upload Notes (Admin)', path: '/settings' },
   ];
 
   return (
