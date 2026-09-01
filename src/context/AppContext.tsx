@@ -209,7 +209,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     try {
       const payload = sanitizeForFirestore({ customLessons: updated, videoOverrides });
-      await setDoc(doc(db, 'appData', 'shared'), payload, { merge: true });
+      setDoc(doc(db, 'appData', 'shared'), payload, { merge: true }).catch(err => console.error('Firestore background sync error:', err));
     } catch (err) {
       console.error("Error saving to Firestore:", err);
       throw err;
@@ -230,7 +230,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     try {
       const payload = sanitizeForFirestore({ customLessons: updated, videoOverrides });
-      await setDoc(doc(db, 'appData', 'shared'), payload, { merge: true });
+      setDoc(doc(db, 'appData', 'shared'), payload, { merge: true }).catch(err => console.error('Firestore background sync error:', err));
     } catch (err) {
       console.error("Error deleting from Firestore:", err);
       throw err;
@@ -272,7 +272,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     try {
       const payload = sanitizeForFirestore({ customLessons, videoOverrides: updatedOverrides });
-      await setDoc(doc(db, 'appData', 'shared'), payload, { merge: true });
+      setDoc(doc(db, 'appData', 'shared'), payload, { merge: true }).catch(err => console.error('Firestore background sync error:', err));
     } catch (err) {
       console.error("Error updating video in Firestore:", err);
       throw err;
@@ -295,7 +295,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     try {
       const payload = sanitizeForFirestore({ customLessons, videoOverrides: nextOverrides });
-      await setDoc(doc(db, 'appData', 'shared'), payload, { merge: true });
+      setDoc(doc(db, 'appData', 'shared'), payload, { merge: true }).catch(err => console.error('Firestore background sync error:', err));
     } catch (err) {
       console.error("Error resetting video in Firestore:", err);
       throw err;

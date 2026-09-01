@@ -112,7 +112,7 @@ export const Settings = () => {
           payload.pdfFile = pdfFile ? pdfFile : undefined;
         }
 
-        await updateLessonVideo(selectedLessonId, payload);
+        updateLessonVideo(selectedLessonId, payload).catch(console.error);
         const typeLabel = actionType === 'manage_video' ? 'Video' : 'Notes';
         setSuccessMsg(`${typeLabel} successfully saved for "${activeLesson?.title || selectedLessonId}"!`);
       } else {
@@ -121,7 +121,7 @@ export const Settings = () => {
         const id = crypto.randomUUID();
         const mp4FileId = videoType === 'mp4' && file ? `video_${id}` : undefined;
 
-        await addCustomLesson({
+        addCustomLesson({
           id,
           courseTitle: effectiveCourseTitle,
           chapterTitle: chapterTitle || "General",
@@ -134,7 +134,7 @@ export const Settings = () => {
           practice: practiceProblem,
           notes: notes,
           pdfFileId: pdfFile ? `pdf_${id}` : undefined
-        }, file || undefined, pdfFile || undefined);
+        }, file || undefined, pdfFile || undefined).catch(console.error);
 
         setSuccessMsg(`New lesson "${lessonTitle}" created in ${effectiveCourseTitle}!`);
         
